@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Mail,
   Lock,
@@ -9,18 +10,17 @@ import {
   ArrowRight,
   ShieldCheck,
   Sparkles,
-  BarChart,
-  Database
 } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+
+  const router = useRouter();
 
   function validateEmail(v) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
@@ -30,6 +30,8 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    
+    router.push('/home');
 
     if (!validateEmail(email)) {
       setError("Please enter a valid email address.");
