@@ -12,15 +12,19 @@ import {
   Sparkles,
 } from "lucide-react";
 
+// RTK Query auth hook (from src/services/auth.api.js)
+import { useLoginMutation } from "@/services/auth.api";
+
 export default function LoginPage() {
+  const router = useRouter();
+  const [login, { isLoading }] = useLoginMutation();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-
-  const router = useRouter();
 
   function validateEmail(v) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
@@ -30,8 +34,6 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setSuccess(null);
-    
-    router.push('/home');
 
     if (!validateEmail(email)) {
       setError("Please enter a valid email address.");
@@ -42,18 +44,28 @@ export default function LoginPage() {
       return;
     }
 
-    setLoading(true);
-    // Simulate an API call
-    await new Promise((r) => setTimeout(r, 1200));
-    setLoading(false);
+    try {
+      // Calls POST /v1/auth/login with { email, password }
+      // and (via onQueryStarted) stores tokens+user in Redux/localStorage
+      const res = await login({ email, password }).unwrap();
 
-    // Demo-only: accept any email/password
-    setSuccess("Signed in successfully. Redirecting…");
+      // Optional: you can read user/message from res.data
+      setSuccess("Signed in successfully. Redirecting…");
+
+      // Navigate after success
+      router.replace("/home");
+    } catch (err) {
+      // RTKQ error shape: { error: { status, data } }
+      const apiMsg =
+        err?.data?.message ||
+        err?.data?.error ||
+        "Login failed. Please check your credentials.";
+      setError(apiMsg);
+    }
   }
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 via-white to-emerald-50 dark:from-slate-950 dark:via-slate-950 dark:to-emerald-950 text-slate-900 dark:text-slate-100">
-      {/* Background accents */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-emerald-200/40 blur-3xl dark:bg-emerald-400/10" />
         <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-sky-200/40 blur-3xl dark:bg-sky-400/10" />
@@ -61,7 +73,7 @@ export default function LoginPage() {
 
       <div className="relative mx-auto flex min-h-screen max-w-6xl items-center justify-center px-4 py-10">
         <div className="grid w-full gap-8 lg:grid-cols-2">
-          {/* Left side: Marketing / feature callouts */}
+          {/* Left side */}
           <div className="hidden lg:flex flex-col justify-center rounded-3xl border border-slate-200/60 bg-white/70 p-10 shadow-sm backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/60">
             <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-700 dark:text-emerald-300">
               <Sparkles className="h-4 w-4" />
@@ -72,7 +84,7 @@ export default function LoginPage() {
             </h1>
             <p className="mt-3 max-w-md text-slate-600 dark:text-slate-400">
               Access the CMS to manage research articles, track climate–water
-              data, and collaborate on sustainable solutions.{" "}
+              data, and collaborate on sustainable solutions.
             </p>
 
             <div className="mt-10 grid gap-4 sm:grid-cols-2">
@@ -166,38 +178,22 @@ export default function LoginPage() {
                     />
                     <button
                       type="button"
-                      aria-label={
-                        showPassword ? "Hide password" : "Show password"
-                      }
+                      aria-label={showPassword ? "Hide password" : "Show password"}
                       onClick={() => setShowPassword((s) => !s)}
                       className="absolute inset-y-0 right-2 grid place-items-center rounded-xl px-2 text-slate-500 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 dark:text-slate-400"
                     >
-                      {showPassword ? (
-                        <EyeOff className="h-5 w-5" />
-                      ) : (
-                        <Eye className="h-5 w-5" />
-                      )}
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
                   </div>
                 </label>
 
-                {/* Row: Remember + Forgot */}
-                <div className="mt-1 flex items-center justify-between">
-                  {/* <a
-                    href="#"
-                    className="text-sm font-medium text-emerald-700 hover:underline dark:text-emerald-400"
-                  >
-                    Forgot password?
-                  </a> */}
-                </div>
-
                 {/* Submit */}
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={isLoading}
                   className="group mt-2 inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-500/40 disabled:cursor-not-allowed disabled:opacity-80"
                 >
-                  {loading ? (
+                  {isLoading ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
                       Signing in…
@@ -209,32 +205,13 @@ export default function LoginPage() {
                     </>
                   )}
                 </button>
-
-                <div className="my-3 h-px w-full bg-gradient-to-r from-transparent via-slate-300 to-transparent dark:via-slate-700" />
-
-                {/* <p className="text-center text-sm text-slate-600 dark:text-slate-400">
-                  Don’t have an account?{" "}
-                  <a
-                    href="#"
-                    className="font-semibold text-emerald-700 hover:underline dark:text-emerald-400"
-                  >
-                    Create one
-                  </a>
-                </p> */}
               </form>
             </div>
 
-            {/* Tiny footer */}
             <p className="mt-6 text-center text-xs text-slate-500 dark:text-slate-400">
               By continuing you agree to our{" "}
-              <a href="#" className="underline">
-                Terms
-              </a>{" "}
-              and{" "}
-              <a href="#" className="underline">
-                Privacy Policy
-              </a>
-              .
+              <a href="#" className="underline">Terms</a> and{" "}
+              <a href="#" className="underline">Privacy Policy</a>.
             </p>
           </div>
         </div>
