@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import Header from "@/components/dashboard/Header";
 import Sidebar from "@/components/dashboard/Sidebar";
 import { Home, FileText, Database } from "lucide-react";
+import AuthGate from "@/utils/AuthGate";
 
 const DashboardLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -27,6 +28,7 @@ const DashboardLayout = ({ children }) => {
   ];
 
   return (
+    <AuthGate>
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 via-white to-emerald-50 dark:from-slate-950 dark:via-slate-950 dark:to-emerald-950">
       <Header
         dark={dark}
@@ -46,6 +48,7 @@ const DashboardLayout = ({ children }) => {
         {children}
       </div>
     </div>
+    </AuthGate>
   );
 };
 

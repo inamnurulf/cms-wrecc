@@ -11,11 +11,11 @@ export const authApi = baseApi.injectEndpoints({
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
         const { data } = await queryFulfilled;
         const payload = data?.data;
-        if (payload?.access_token && payload?.refresh_token && payload?.user) {
+        if (payload?.data?.access_token && payload?.data?.refresh_token && payload?.data?.user) {
           dispatch(
             setSession({
-              accessToken: payload.access_token,
-              refreshToken: payload.refresh_token,
+              accessToken: payload?.data?.access_token,
+              refreshToken: payload?.data.refresh_token,
               user: payload.user,
             })
           );
@@ -36,6 +36,7 @@ export const authApi = baseApi.injectEndpoints({
       },
     }),
   }),
+  overrideExisting: true,
 });
 
 export const { useRegisterMutation, useLoginMutation, useMeQuery, useLogoutMutation } = authApi;

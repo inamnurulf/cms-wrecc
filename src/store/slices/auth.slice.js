@@ -19,6 +19,7 @@ const slice = createSlice({
       state.accessToken = accessToken || null;
       state.refreshToken = refreshToken || null;
       state.user = user || null;
+
       setItem("accessToken", state.accessToken);
       setItem("refreshToken", state.refreshToken);
       setItem("user", JSON.stringify(state.user));
