@@ -4,8 +4,11 @@ import Header from "@/components/dashboard/Header";
 import Sidebar from "@/components/dashboard/Sidebar";
 import { Home, FileText, Database } from "lucide-react";
 import AuthGate from "@/utils/AuthGate";
+import { logout } from "@/store/slices/auth.slice";
+import { useAppDispatch } from "@/store/hooks";
 
 const DashboardLayout = ({ children }) => {
+  const dispatch = useAppDispatch();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [dark, setDark] = useState(false);
@@ -27,6 +30,10 @@ const DashboardLayout = ({ children }) => {
     { label: "Data", icon: Database, href: "/data" },
   ];
 
+  const handleLogout = () => {
+    dispatch(logout());
+  }
+
   return (
     <AuthGate>
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 via-white to-emerald-50 dark:from-slate-950 dark:via-slate-950 dark:to-emerald-950">
@@ -43,7 +50,7 @@ const DashboardLayout = ({ children }) => {
           setSidebarOpen={setSidebarOpen}
           nav={nav}
           onNewProject={() => alert("New Project")}
-          onLogout={() => alert("Logged out")}
+          onLogout={handleLogout}
         />
         {children}
       </div>
