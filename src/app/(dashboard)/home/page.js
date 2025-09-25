@@ -25,9 +25,9 @@ export default function ArticlesDashboard() {
   };
 
   return (
-    <div className="w-full m-8 grid gap-6">
+    <div className="w-full p-4 sm:p-8 grid gap-6 max-w-7xl mx-auto">
       {/* Welcome + quick actions */}
-      <WelcomeCard display_name={user.display_name} />
+      <WelcomeCard display_name={user.display_name} redirectTo="/articles" />
 
       {/* Stats */}
       <StatsGrid/>

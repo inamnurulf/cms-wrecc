@@ -1,8 +1,18 @@
 import React from "react";
-import { Plus } from "lucide-react";
-import { Loader2 } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-const WelcomeCard = ({ display_name, onCreate, creating }) => {
+const WelcomeCard = ({ display_name, onCreate, creating, redirectTo }) => {
+  const router = useRouter();
+
+  const handleClick = () => {
+    if (redirectTo) {
+      router.push(redirectTo);
+    } else {
+      onCreate?.();
+    }
+  };
+
   return (
     <section className="rounded-3xl border border-slate-200/60 bg-white/80 p-5 shadow-sm backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/60">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -16,7 +26,7 @@ const WelcomeCard = ({ display_name, onCreate, creating }) => {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={onCreate}
+            onClick={handleClick}
             disabled={creating}
             className="rounded-2xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
           >

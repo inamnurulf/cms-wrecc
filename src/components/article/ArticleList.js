@@ -25,7 +25,10 @@ export default function ArticleList({
         {/* Search */}
         <div className="flex items-center gap-2">
           <div className="relative w-full">
-            <SearchIcon className="pointer-events-none absolute left-2 top-2.5" size={16} />
+            <SearchIcon
+              className="pointer-events-none absolute left-2 top-2.5"
+              size={16}
+            />
             <Input
               placeholder="Search title, tag, author…"
               className="pl-8"
@@ -92,13 +95,19 @@ export default function ArticleList({
               }`}
               onClick={() => setCurrentId(a.id)}
             >
-              <img src={a.heroImage} alt="hero" className="h-14 w-20 rounded-lg object-cover" />
+              <img
+                src={a.heroImage}
+                alt="hero"
+                className="h-14 w-20 rounded-lg object-cover"
+              />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <h3 className="truncate text-sm font-semibold">{a.title}</h3>
                   <Badge>{a.status}</Badge>
                 </div>
-                <p className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400">{a.summary}</p>
+                <p className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+                  {a.summary}
+                </p>
                 <div className="mt-1 flex flex-wrap items-center gap-1">
                   {a.tags.slice(0, 3).map((t) => (
                     <Badge key={t}>#{t}</Badge>
@@ -115,7 +124,7 @@ export default function ArticleList({
           <Button
             variant="outline"
             disabled={page === 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            onClick={() => setPage(Math.max(1, page - 1))}
           >
             <ChevronLeft size={16} /> Prev
           </Button>
@@ -125,7 +134,7 @@ export default function ArticleList({
           <Button
             variant="outline"
             disabled={page === totalPages}
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            onClick={() => setPage(Math.min(totalPages, page + 1))}
           >
             Next <ChevronRight size={16} />
           </Button>
