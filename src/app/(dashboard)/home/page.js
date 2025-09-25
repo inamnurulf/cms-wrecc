@@ -4,6 +4,7 @@ import { FileText, Edit3 } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import WelcomeCard from "@/components/WelcomeCard";
 import StatsGrid from "@/components/StatsGrid";
+import Link from "next/link";
 
 export default function ArticlesDashboard() {
   const [dark, setDark] = useState(false);
@@ -36,12 +37,12 @@ export default function ArticlesDashboard() {
       <section className="rounded-2xl border border-slate-200/60 bg-white/80 p-5 dark:border-slate-800 dark:bg-slate-900/60">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-bold">Recent Articles</h2>
-          <a
-            href="#articles"
+          <Link
+            href="/articles"
             className="text-sm text-emerald-700 hover:underline dark:text-emerald-300"
           >
             View all
-          </a>
+          </Link>
         </div>
         <ul className="grid gap-3">
           {[
