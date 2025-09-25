@@ -30,13 +30,7 @@ export default function ArticlesDashboard() {
       <WelcomeCard display_name={user.display_name} />
 
       {/* Stats */}
-      <StatsGrid
-        stats={[
-          { title: "Published Articles", value: 24 },
-          { title: "Drafts", value: 6 },
-          { title: "Pending Review", value: 3 },
-        ]}
-      />
+      <StatsGrid/>
 
       {/* Recent Articles */}
       <section className="rounded-2xl border border-slate-200/60 bg-white/80 p-5 dark:border-slate-800 dark:bg-slate-900/60">

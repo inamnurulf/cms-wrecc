@@ -1,6 +1,5 @@
 import { baseApi } from "./baseApi";
 
-
 /** Helper to strip empty params so URLs stay clean */
 const compactParams = (obj) =>
   Object.fromEntries(
@@ -26,9 +25,9 @@ export const articleApi = baseApi.injectEndpoints({
         }),
       }),
       providesTags: (result) => {
-        const base = [{ type: "Articles" , id: "LIST" }];
+        const base = [{ type: "Articles", id: "LIST" }];
         const byId =
-          result?.items?.map?.((a) => ({ type: "Articles" , id: a.id })) ?? [];
+          result?.items?.map?.((a) => ({ type: "Articles", id: a.id })) ?? [];
         return [...base, ...byId];
       },
     }),
@@ -39,6 +38,11 @@ export const articleApi = baseApi.injectEndpoints({
       providesTags: (res, _e, id) => [{ type: "Articles", id }],
     }),
 
+    getArticleStats: build.query({
+      query: (params) => ({ url: "/v1/articles/stats", params }),
+      providesTags: [{ type: "Articles", id: "STATS" }],
+    }),
+
     /** POST /v1/articles (auth) */
     createArticle: build.mutation({
       query: (body) => ({
@@ -46,7 +50,10 @@ export const articleApi = baseApi.injectEndpoints({
         method: "POST",
         data: body,
       }),
-      invalidatesTags: [{ type: "Articles", id: "LIST" }],
+      invalidatesTags: [
+        { type: "Articles", id: "LIST" },
+        { type: "Articles", id: "STATS" },
+      ],
     }),
 
     /** PUT /v1/articles/:id (auth) */
@@ -85,6 +92,7 @@ export const articleApi = baseApi.injectEndpoints({
       invalidatesTags: (res, _e, arg) => [
         { type: "Articles", id: "LIST" },
         { type: "Articles", id: arg.id },
+        { type: "Articles", id: "STATS" },
       ],
     }),
 
@@ -94,6 +102,7 @@ export const articleApi = baseApi.injectEndpoints({
       invalidatesTags: (res, _e, id) => [
         { type: "Articles", id: "LIST" },
         { type: "Articles", id },
+        { type: "Articles", id: "STATS" },
       ],
     }),
   }),
@@ -104,6 +113,7 @@ export const {
   useListArticlesQuery,
   useGetArticleByIdQuery,
   useCreateArticleMutation,
+  useGetArticleStatsQuery,
   useUpdateArticleMutation,
   useChangeArticleStatusMutation,
   useDeleteArticleMutation,

@@ -167,13 +167,7 @@ export default function ArticleCMS() {
           creating={creating}
         />
         {/* Stats */}
-        <StatsGrid
-          stats={[
-            { title: "Published Articles", value: counts.published },
-            { title: "Drafts", value: counts.drafts },
-            { title: "Pending Review", value: counts.pending },
-          ]}
-        />
+        <StatsGrid />
         {/* Recent Articles */}
         <RecentArticles recent={recent} setCurrentId={setCurrentIdLocal} />{" "}
         {/* 👈 pass dispatcher */}
