@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Plus, FileText, Edit3 } from "lucide-react";
+import { useAppSelector } from "@/store/hooks";
 
 export default function ArticlesDashboard() {
   const [dark, setDark] = useState(false);
@@ -16,6 +17,9 @@ export default function ArticlesDashboard() {
     localStorage.setItem("theme-dark", String(dark));
   }, [dark]);
 
+  const user = useAppSelector((state) => state.auth.user) || { name: "Guest", role: "User" };
+  
+
   return (
     <div className="w-full m-8 grid gap-6">
       {/* Welcome + quick actions */}
@@ -23,7 +27,7 @@ export default function ArticlesDashboard() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight">
-              Welcome back, In&apos;am 👋
+              Welcome back, {user.display_name} 👋
             </h1>
             <p className="text-slate-600 dark:text-slate-400">
               Manage your articles and keep your content up to date.

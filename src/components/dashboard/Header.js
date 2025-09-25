@@ -1,14 +1,17 @@
 "use client";
 import React from "react";
 import { Menu, Search, Sun, Moon, Bell, User } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 export default function Header({
   dark,
   onToggleDark,
   onOpenSidebar,
   brand = { initials: "W", name: "WRECC", subtitle: "Dashboard" },
-  user = { name: "In'am", role: "Admin" },
 }) {
+
+
+  const user = useAppSelector((state) => state.auth.user) || { name: "Guest", role: "User" };
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/60 bg-white/80 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/60">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-3 sm:px-4">
@@ -67,7 +70,7 @@ export default function Header({
               <User className="h-4 w-4" />
             </div>
             <div className="hidden sm:block leading-tight">
-              <p className="text-sm font-semibold">{user.name}</p>
+              <p className="text-sm font-semibold">{user.display_name}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {user.role}
               </p>

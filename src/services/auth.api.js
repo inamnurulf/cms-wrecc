@@ -16,7 +16,7 @@ export const authApi = baseApi.injectEndpoints({
             setSession({
               accessToken: payload?.data?.access_token,
               refreshToken: payload?.data.refresh_token,
-              user: payload.user,
+              user: payload?.data?.user,
             })
           );
         }
