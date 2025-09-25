@@ -44,7 +44,7 @@ export default function ArticleCMS() {
     dispatch(setFilters({ status: status === "all" ? "" : status, page: 1 }));
   const setPage = (page) => dispatch(setFilters({ page }));
   const setPageSize = (limit) => dispatch(setFilters({ limit, page: 1 }));
-  const setCurrentIdLocal = (i) => dispatch(setCurrentId(id));
+  const setCurrentIdLocal = (id) => dispatch(setCurrentId(id));
 
   // Data (RTK Query)
   const { items, total, page, limit, isFetching } = useListArticlesQuery(filters, {

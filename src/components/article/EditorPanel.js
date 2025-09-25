@@ -46,6 +46,30 @@ export default function EditorPanel({ article, onChange, onDelete }) {
     set({ tags: [...local.tags, nt] });
   };
 
+  const toSlug = (s) =>
+  s
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+
+    
+  function toLocalDatetime(iso) {
+  const d = new Date(iso);
+  const pad = (n) => n.toString().padStart(2, "0");
+  const yyyy = d.getFullYear();
+  const mm = pad(d.getMonth() + 1);
+  const dd = pad(d.getDate());
+  const hh = pad(d.getHours());
+  const mi = pad(d.getMinutes());
+  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+}
+function fromLocalDatetime(local) {
+  const d = new Date(local);
+  return d.toISOString();
+}
+
   const removeTag = (t) => set({ tags: local.tags.filter((x) => x !== t) });
 
   return (
