@@ -17,6 +17,7 @@ import {
 } from "@/services/articles.api";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setFilters, setCurrentId } from "@/store/slices/articles.slice";
+import { useSearchParams } from "next/navigation";
 
 // ---------- Helpers ----------
 const toSlug = (s) =>
@@ -30,6 +31,8 @@ const toSlug = (s) =>
 // ---------- Main Component ----------
 export default function ArticleCMS() {
   const dispatch = useAppDispatch();
+  const searchParams = useSearchParams();
+  const requestedEdit = searchParams.get("edit");
 
   // Pull filters/state from slice
   const filters = useAppSelector((s) => s.article.filters);
@@ -46,6 +49,8 @@ export default function ArticleCMS() {
   const setPageSize = (limit) => dispatch(setFilters({ limit, page: 1 }));
   const setCurrentIdLocal = (id) => dispatch(setCurrentId(id));
 
+
+
   // Data (RTK Query)
   const { items, total, page, limit, isFetching } = useListArticlesQuery(
     filters,
@@ -59,6 +64,22 @@ export default function ArticleCMS() {
       }),
     }
   );
+
+    useEffect(() => {
+    if (!requestedEdit || !items?.length) return;
+
+    const match = items.find((a) => String(a.id) === String(requestedEdit));
+    if (match) {
+      setCurrentIdLocal(match.id);
+      // scroll to editor area for better UX
+      if (typeof document !== "undefined") {
+        document.querySelector("#articles")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    }
+  }, [requestedEdit, items]);
 
   // Auth user
   const user = useAppSelector((state) => state.auth.user) || {
