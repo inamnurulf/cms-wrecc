@@ -49,7 +49,6 @@ const DashboardLayout = ({ children }) => {
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
           nav={nav}
-          onNewProject={() => alert("New Project")}
           onLogout={handleLogout}
         />
         {children}

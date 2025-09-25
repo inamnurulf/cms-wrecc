@@ -8,6 +8,7 @@ import {
   LogOut,
   X,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function Sidebar({
   collapsed,
@@ -16,9 +17,10 @@ export default function Sidebar({
   setSidebarOpen,
   nav,
   brand = { initials: "W", name: "WRECC" },
-  onNewProject,
   onLogout,
 }) {
+  const router = useRouter();
+  const onNewProject = () => router.push("/articles");
   return (
     <>
       {/* Desktop sidebar */}
