@@ -47,25 +47,32 @@ export default function ArticleCMS() {
   const setCurrentIdLocal = (id) => dispatch(setCurrentId(id));
 
   // Data (RTK Query)
-  const { items, total, page, limit, isFetching } = useListArticlesQuery(filters, {
-    selectFromResult: ({ data, isFetching }) => (
-      console.log("ArticleCMS: got data", data, isFetching) || {
-      items: data?.data?.items ?? [],
-      total: data?.data?.total ?? 0,
-      page: data?.data?.page ?? filters.page ?? 1,
-      limit: data?.data?.limit ?? filters.limit ?? 10,
-      isFetching,
-    }),
-  });
+  const { items, total, page, limit, isFetching } = useListArticlesQuery(
+    filters,
+    {
+      selectFromResult: ({ data, isFetching }) => ({
+        items: data?.data?.items ?? [],
+        total: data?.data?.total ?? 0,
+        page: data?.data?.page ?? filters.page ?? 1,
+        limit: data?.data?.limit ?? filters.limit ?? 10,
+        isFetching,
+      }),
+    }
+  );
 
   // Auth user
-  const user = useAppSelector((state) => state.auth.user) || { name: "Guest", role: "User" };
-  const displayName = (user).display_name || user.name || "Guest";
+  const user = useAppSelector((state) => state.auth.user) || {
+    name: "Guest",
+    role: "User",
+  };
+  const displayName = user.display_name || user.name || "Guest";
 
   // Theme
   const [dark, setDark] = useState(false);
   useEffect(() => {
-    const last = typeof window !== "undefined" && localStorage.getItem("theme-dark") === "true";
+    const last =
+      typeof window !== "undefined" &&
+      localStorage.getItem("theme-dark") === "true";
     setDark(!!last);
     if (typeof document !== "undefined") {
       document.documentElement.classList.toggle("dark", !!last);
@@ -81,7 +88,8 @@ export default function ArticleCMS() {
   // Sorting for the list component (server already filters/paginates)
   const pageItems = useMemo(() => {
     const base = items ?? [];
-    if (sortBy === "title") return [...base].sort((a, b) => a.title.localeCompare(b.title));
+    if (sortBy === "title")
+      return [...base].sort((a, b) => a.title.localeCompare(b.title));
     // Assume backend already sorts by updatedAt desc; if not, do it here:
     return [...base].sort(
       (a, b) =>
@@ -153,8 +161,11 @@ export default function ArticleCMS() {
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 via-white to-emerald-50 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-emerald-950 dark:text-slate-100">
       <div className="w-full p-4 sm:p-8 grid gap-6 max-w-7xl mx-auto">
         {/* Welcome + quick actions */}
-        <WelcomeCard display_name={displayName} onCreate={onCreate} creating={creating} />
-
+        <WelcomeCard
+          display_name={displayName}
+          onCreate={onCreate}
+          creating={creating}
+        />
         {/* Stats */}
         <StatsGrid
           stats={[
@@ -163,10 +174,9 @@ export default function ArticleCMS() {
             { title: "Pending Review", value: counts.pending },
           ]}
         />
-
         {/* Recent Articles */}
-        <RecentArticles recent={recent} setCurrentId={setCurrentIdLocal} /> {/* 👈 pass dispatcher */}
-
+        <RecentArticles recent={recent} setCurrentId={setCurrentIdLocal} />{" "}
+        {/* 👈 pass dispatcher */}
         {/* Main Grid */}
         <main id="articles" className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {/* Left: List & Filters */}

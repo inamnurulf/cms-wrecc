@@ -27,7 +27,6 @@ export default function EditorPanel({
   useEffect(() => {
     setLocal(article);
     didMount.current = false; // prevent immediate debounce fire
-    console.log("EditorPanel: loaded article", article);
   }, [article.id]);
 
   // Debounced propagate changes
