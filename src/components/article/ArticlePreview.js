@@ -25,7 +25,7 @@ export default function ArticlePreview({ article }) {
                 </>
               )}
               <span>•</span>
-              <span className="flex items-center gap-2">{article.tags.map((t) => (<Badge key={t.id}>#{t.name}</Badge>))}</span>
+              <span className="flex items-center gap-2">{article.tags.map((t) => (<Badge key={t}>#{t}</Badge>))}</span>
             </div>
             {article.heroImage && (
               <img src={article.heroImage} alt="hero" className="mt-4 aspect-[16/9] w-full rounded-xl object-cover" />

@@ -101,7 +101,7 @@ export default function ArticleList({
                 <p className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400">{a.summary}</p>
                 <div className="mt-1 flex flex-wrap items-center gap-1">
                   {a.tags.slice(0, 3).map((t) => (
-                    <Badge key={t.id}>#{t.name}</Badge>
+                    <Badge key={t}>#{t}</Badge>
                   ))}
                   {a.tags.length > 3 && <Badge>+{a.tags.length - 3}</Badge>}
                 </div>

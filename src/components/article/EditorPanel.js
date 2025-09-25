@@ -1,18 +1,32 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
-import { FileEdit, Trash2, User, Calendar, Image as ImageIcon, Tags, Save } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  FileEdit,
+  Trash2,
+  User,
+  Calendar,
+  Image as ImageIcon,
+  Tags,
+  Save,
+} from "lucide-react";
 
 import Button from "../atoms/Button";
 import Input from "../atoms/Input";
 import Textarea from "../atoms/TextArea";
 import TagEditor from "./TagEditor";
 
-export default function EditorPanel({ article, onChange, onDelete }) {
+export default function EditorPanel({
+  article,
+  onChange,
+  onDelete,
+  onToggleStatus,
+}) {
   const [local, setLocal] = useState(article);
   const didMount = useRef(false);
 
   useEffect(() => {
     setLocal(article);
+    didMount.current = false; // prevent immediate debounce fire
   }, [article.id]);
 
   // Debounced propagate changes
@@ -21,56 +35,71 @@ export default function EditorPanel({ article, onChange, onDelete }) {
       didMount.current = true;
       return;
     }
-    const t = setTimeout(() => onChange(article.id, local), 250);
+    const t = setTimeout(() => {
+      onChange?.(article.id, {
+        title: local.title,
+        slug: local.slug,
+        author: local.author, 
+        summary: local.summary,
+        content: local.content,
+        heroImage: local.heroImage, 
+        status: local.status, 
+        tags: local.tags, 
+      });
+    }, 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [local]);
 
   const set = (patch) => setLocal((s) => ({ ...s, ...patch }));
 
-  const toggleStatus = () => {
-    if (local.status === "draft") {
-      set({ status: "published", publishedAt: new Date().toISOString() });
-    } else if (local.status === "published") {
-      set({ status: "draft", publishedAt: undefined });
-    } else {
-      // allow cycling pending → published
-      set({ status: "published", publishedAt: new Date().toISOString() });
-    }
-  };
-
-  const addTag = (t) => {
-    const nt = t.trim().toLowerCase();
-    if (!nt) return;
-    if (local.tags.includes(nt)) return;
-    set({ tags: [...local.tags, nt] });
-  };
-
   const toSlug = (s) =>
-  s
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
+    String(s || "")
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
 
-    
-  function toLocalDatetime(iso) {
-  const d = new Date(iso);
-  const pad = (n) => n.toString().padStart(2, "0");
-  const yyyy = d.getFullYear();
-  const mm = pad(d.getMonth() + 1);
-  const dd = pad(d.getDate());
-  const hh = pad(d.getHours());
-  const mi = pad(d.getMinutes());
-  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
-}
-function fromLocalDatetime(local) {
-  const d = new Date(local);
-  return d.toISOString();
-}
+  const toLocalDatetime = (iso) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const pad = (n) => n.toString().padStart(2, "0");
+    const yyyy = d.getFullYear();
+    const mm = pad(d.getMonth() + 1);
+    const dd = pad(d.getDate());
+    const hh = pad(d.getHours());
+    const mi = pad(d.getMinutes());
+    return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+  };
 
-  const removeTag = (t) => set({ tags: local.tags.filter((x) => x !== t) });
+const hasTag = (name) => {
+  const key = String(name || "").trim().toLowerCase();
+  return (local.tags || []).some((t) => String(t).trim().toLowerCase() === key);
+};
+
+const addTag = (t) => {
+  const cleaned = String(t || "").trim().replace(/\s+/g, " ");
+  if (!cleaned) return;
+  if (hasTag(cleaned)) return;
+  if (cleaned.length > 64) return;
+  set({ tags: [ ...(local.tags || []), cleaned ] });
+};
+
+const removeTag = (t) => {
+  set({ tags: (local.tags || []).filter((x) => x !== t) });
+};
+
+  const toggleStatus = () => {
+    const next =
+      local.status === "draft"
+        ? "published"
+        : local.status === "published"
+        ? "draft"
+        : "published";
+    set({ status: next });
+    onToggleStatus?.(article.id, next);
+  };
 
   return (
     <div className="space-y-3">
@@ -80,9 +109,10 @@ function fromLocalDatetime(local) {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={toggleStatus}>
-            <Save size={16} /> {local.status === "draft" ? "Publish" : "Unpublish"}
+            <Save size={16} />{" "}
+            {local.status === "draft" ? "Publish" : "Unpublish"}
           </Button>
-          <Button variant="outline" onClick={() => onDelete(article.id)}>
+          <Button variant="outline" onClick={() => onDelete?.(article.id)}>
             <Trash2 size={16} /> Delete
           </Button>
         </div>
@@ -93,47 +123,89 @@ function fromLocalDatetime(local) {
           <span className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
             <FileEdit size={14} /> Title
           </span>
-          <Input value={local.title} onChange={(e) => set({ title: e.target.value, slug: toSlug(e.target.value) })} />
+          <Input
+            value={local.title || ""}
+            onChange={(e) =>
+              set({ title: e.target.value, slug: toSlug(e.target.value) })
+            }
+          />
         </label>
+
         <label className="space-y-1">
-          <span className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">/ Slug</span>
-          <Input value={local.slug} onChange={(e) => set({ slug: toSlug(e.target.value) })} />
+          <span className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
+            / Slug
+          </span>
+          <Input
+            value={local.slug || ""}
+            onChange={(e) => set({ slug: toSlug(e.target.value) })}
+          />
         </label>
+
         <label className="space-y-1">
           <span className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
             <User size={14} /> Author
           </span>
-          <Input value={local.author} onChange={(e) => set({ author: e.target.value })} />
+          <Input
+            value={local.author || ""}
+            onChange={(e) => set({ author: e.target.value })}
+          />
         </label>
+
         <label className="space-y-1">
           <span className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
-            <Calendar size={14} /> Published At (auto when publishing)
+            <Calendar size={14} /> Published At (server-controlled)
           </span>
           <Input
             type="datetime-local"
-            value={local.publishedAt ? toLocalDatetime(local.publishedAt) : ""}
-            onChange={(e) => set({ publishedAt: fromLocalDatetime(e.target.value) })}
+            value={toLocalDatetime(local.publishedAt)}
+            readOnly
+            disabled
           />
         </label>
+
         <label className="col-span-2 space-y-1">
           <span className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
             <ImageIcon size={14} /> Hero Image URL
           </span>
-          <Input value={local.heroImage} onChange={(e) => set({ heroImage: e.target.value })} placeholder="https://…" />
+          <Input
+            value={local.heroImage || ""}
+            onChange={(e) => set({ heroImage: e.target.value })}
+            placeholder="https://…"
+          />
         </label>
+
         <label className="col-span-2 space-y-1">
-          <span className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">Summary</span>
-          <Textarea rows={3} value={local.summary} onChange={(e) => set({ summary: e.target.value })} />
+          <span className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
+            Summary
+          </span>
+          <Textarea
+            rows={3}
+            value={local.summary || ""}
+            onChange={(e) => set({ summary: e.target.value })}
+          />
         </label>
+
         <div className="col-span-2">
           <div className="mb-1 flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
-            <Tags size={14} /> Tags
+            <Tags size={14} /> Tags (names only)
           </div>
-          <TagEditor tags={local.tags} onAdd={addTag} onRemove={removeTag} />
+          <TagEditor
+            tags={local.tags || []}
+            onAdd={addTag}
+            onRemove={removeTag}
+          />
         </div>
+
         <label className="col-span-2 space-y-1">
-          <span className="text-xs font-medium text-slate-600 dark:text-slate-300">Body (Markdown)</span>
-          <Textarea rows={16} value={local.content} onChange={(e) => set({ content: e.target.value })} className="font-mono" />
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+            Body (Markdown)
+          </span>
+          <Textarea
+            rows={16}
+            value={local.content || ""}
+            onChange={(e) => set({ content: e.target.value })}
+            className="font-mono"
+          />
         </label>
       </div>
     </div>
