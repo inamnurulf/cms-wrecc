@@ -28,7 +28,7 @@ export default function StatsGrid({ stats }) {
       ? [
           { title: "Published Articles", value: fetched.data?.published ?? 0 },
           { title: "Drafts", value: fetched.data?.drafts ?? 0 },
-          { title: "Pending Review", value: fetched.data?.pending ?? 0 },
+          { title: "Pending", value: fetched.data?.pending ?? 0 },
         ]
       : undefined;
 
@@ -39,12 +39,12 @@ export default function StatsGrid({ stats }) {
       ? [
           { title: "Published Articles", value: "…" },
           { title: "Drafts", value: "…" },
-          { title: "Pending Review", value: "…" },
+          { title: "Pending", value: "…" },
         ]
       : autoStats ?? [
           { title: "Published Articles", value: 0 },
           { title: "Drafts", value: 0 },
-          { title: "Pending Review", value: 0 },
+          { title: "Pending", value: 0 },
         ];
 
   return (

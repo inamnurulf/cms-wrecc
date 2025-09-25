@@ -44,12 +44,13 @@ export default function ArticleCMS() {
   // Slice helpers
   const setQuery = (q) => dispatch(setFilters({ q, page: 1 }));
   const setStatus = (status) =>
-    dispatch(setFilters({ status: status === "all" ? "" : status, page: 1 }));
+    dispatch(
+      setFilters({ status: status === "all" ? undefined : status, page: 1 })
+    );
+
   const setPage = (page) => dispatch(setFilters({ page }));
   const setPageSize = (limit) => dispatch(setFilters({ limit, page: 1 }));
   const setCurrentIdLocal = (id) => dispatch(setCurrentId(id));
-
-
 
   // Data (RTK Query)
   const { items, total, page, limit, isFetching } = useListArticlesQuery(
@@ -65,7 +66,7 @@ export default function ArticleCMS() {
     }
   );
 
-    useEffect(() => {
+  useEffect(() => {
     if (!requestedEdit || !items?.length) return;
 
     const match = items.find((a) => String(a.id) === String(requestedEdit));
