@@ -27,6 +27,7 @@ export default function EditorPanel({
   useEffect(() => {
     setLocal(article);
     didMount.current = false; // prevent immediate debounce fire
+    console.log("EditorPanel: loaded article", article);
   }, [article.id]);
 
   // Debounced propagate changes
@@ -39,12 +40,12 @@ export default function EditorPanel({
       onChange?.(article.id, {
         title: local.title,
         slug: local.slug,
-        author: local.author, 
+        author: local.author,
         summary: local.summary,
         content: local.content,
-        heroImage: local.heroImage, 
-        status: local.status, 
-        tags: local.tags, 
+        heroImage: local.heroImage,
+        status: local.status,
+        tags: local.tags,
       });
     }, 300);
     return () => clearTimeout(t);
@@ -61,34 +62,38 @@ export default function EditorPanel({
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-");
 
-  const toLocalDatetime = (iso) => {
+  const toLocalDate = (iso) => {
     if (!iso) return "";
     const d = new Date(iso);
     const pad = (n) => n.toString().padStart(2, "0");
     const yyyy = d.getFullYear();
     const mm = pad(d.getMonth() + 1);
     const dd = pad(d.getDate());
-    const hh = pad(d.getHours());
-    const mi = pad(d.getMinutes());
-    return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+    return `${yyyy}-${mm}-${dd}`;
   };
 
-const hasTag = (name) => {
-  const key = String(name || "").trim().toLowerCase();
-  return (local.tags || []).some((t) => String(t).trim().toLowerCase() === key);
-};
+  const hasTag = (name) => {
+    const key = String(name || "")
+      .trim()
+      .toLowerCase();
+    return (local.tags || []).some(
+      (t) => String(t).trim().toLowerCase() === key
+    );
+  };
 
-const addTag = (t) => {
-  const cleaned = String(t || "").trim().replace(/\s+/g, " ");
-  if (!cleaned) return;
-  if (hasTag(cleaned)) return;
-  if (cleaned.length > 64) return;
-  set({ tags: [ ...(local.tags || []), cleaned ] });
-};
+  const addTag = (t) => {
+    const cleaned = String(t || "")
+      .trim()
+      .replace(/\s+/g, " ");
+    if (!cleaned) return;
+    if (hasTag(cleaned)) return;
+    if (cleaned.length > 64) return;
+    set({ tags: [...(local.tags || []), cleaned] });
+  };
 
-const removeTag = (t) => {
-  set({ tags: (local.tags || []).filter((x) => x !== t) });
-};
+  const removeTag = (t) => {
+    set({ tags: (local.tags || []).filter((x) => x !== t) });
+  };
 
   const toggleStatus = () => {
     const next =
@@ -156,8 +161,8 @@ const removeTag = (t) => {
             <Calendar size={14} /> Published At (server-controlled)
           </span>
           <Input
-            type="datetime-local"
-            value={toLocalDatetime(local.publishedAt)}
+            type="date"
+            value={toLocalDate(local.published_at)}
             readOnly
             disabled
           />
