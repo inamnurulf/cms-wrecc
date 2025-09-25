@@ -1,7 +1,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Plus, FileText, Edit3 } from "lucide-react";
+import { FileText, Edit3 } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
+import WelcomeCard from "@/components/WelcomeCard";
+import StatsGrid from "@/components/StatsGrid";
 
 export default function ArticlesDashboard() {
   const [dark, setDark] = useState(false);
@@ -17,48 +19,24 @@ export default function ArticlesDashboard() {
     localStorage.setItem("theme-dark", String(dark));
   }, [dark]);
 
-  const user = useAppSelector((state) => state.auth.user) || { name: "Guest", role: "User" };
-  
+  const user = useAppSelector((state) => state.auth.user) || {
+    name: "Guest",
+    role: "User",
+  };
 
   return (
     <div className="w-full m-8 grid gap-6">
       {/* Welcome + quick actions */}
-      <section className="rounded-3xl border border-slate-200/60 bg-white/80 p-5 shadow-sm backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/60">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight">
-              Welcome back, {user.display_name} 👋
-            </h1>
-            <p className="text-slate-600 dark:text-slate-400">
-              Manage your articles and keep your content up to date.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button className="rounded-2xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
-              <Plus className="mr-1 inline h-4 w-4" /> New Article
-            </button>
-          </div>
-        </div>
-      </section>
+      <WelcomeCard display_name={user.display_name} />
 
       {/* Stats */}
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {[
+      <StatsGrid
+        stats={[
           { title: "Published Articles", value: 24 },
           { title: "Drafts", value: 6 },
           { title: "Pending Review", value: 3 },
-        ].map((s) => (
-          <div
-            key={s.title}
-            className="rounded-2xl border border-slate-200/60 bg-white/80 p-5 dark:border-slate-800 dark:bg-slate-900/60"
-          >
-            <p className="text-xs uppercase tracking-wide text-slate-500">
-              {s.title}
-            </p>
-            <p className="mt-2 text-2xl font-extrabold">{s.value}</p>
-          </div>
-        ))}
-      </section>
+        ]}
+      />
 
       {/* Recent Articles */}
       <section className="rounded-2xl border border-slate-200/60 bg-white/80 p-5 dark:border-slate-800 dark:bg-slate-900/60">
