@@ -4,8 +4,8 @@ import { useAppSelector } from "@/store/hooks";
 import { useGetArticleStatsQuery } from "@/services/articles.api";
 
 export default function StatsGrid({ stats }) {
-  const shouldFetch = !stats || stats.length === 0 || stats.every((s) => s?.value == null);
-
+  const shouldFetch =
+    !stats || stats.length === 0 || stats.every((s) => s?.value == null);
   const filters = useAppSelector((s) => s.article?.filters) || {};
 
   const params = useMemo(
@@ -19,6 +19,8 @@ export default function StatsGrid({ stats }) {
 
   const { data: fetched, isFetching } = useGetArticleStatsQuery(params, {
     skip: !shouldFetch,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
   });
 
   const autoStats =
@@ -45,7 +47,6 @@ export default function StatsGrid({ stats }) {
           { title: "Pending Review", value: 0 },
         ];
 
-        console.log({stats, fetched, finalStats});  
   return (
     <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {finalStats.map((s) => (
@@ -53,7 +54,9 @@ export default function StatsGrid({ stats }) {
           key={s.title}
           className="rounded-2xl border border-slate-200/60 bg-white/80 p-5 dark:border-slate-800 dark:bg-slate-900/60"
         >
-          <p className="text-xs uppercase tracking-wide text-slate-500">{s.title}</p>
+          <p className="text-xs uppercase tracking-wide text-slate-500">
+            {s.title}
+          </p>
           <p className="mt-2 text-2xl font-extrabold">{s.value}</p>
         </div>
       ))}

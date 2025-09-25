@@ -66,6 +66,7 @@ export const articleApi = baseApi.injectEndpoints({
       invalidatesTags: (res, _e, arg) => [
         { type: "Articles", id: "LIST" },
         { type: "Articles", id: arg.id },
+        { type: "Articles", id: "STATS" },
       ],
     }),
 
