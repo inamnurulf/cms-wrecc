@@ -4,6 +4,32 @@ import { Search as SearchIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import Badge from "../atoms/Badge";
 import Button from "../atoms/Button";
 import Input from "../atoms/Input";
+import { getImageUrl } from "@/services/images.api";
+
+const PLACEHOLDER =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 180'>
+       <defs>
+         <linearGradient id='g' x1='0' x2='1' y1='0' y2='1'>
+           <stop offset='0%' stop-color='#ecfdf5'/><stop offset='100%' stop-color='#f8fafc'/>
+         </linearGradient>
+       </defs>
+       <rect width='100%' height='100%' fill='url(#g)'/>
+       <g fill='#94a3b8'>
+         <rect x='24' y='24' width='88' height='8' rx='4'/>
+         <rect x='24' y='40' width='56' height='8' rx='4'/>
+       </g>
+     </svg>`
+  );
+
+function heroSrcFor(a) {
+  if (a?.hero_image_id) return getImageUrl(a.hero_image_id);
+  if (Array.isArray(a?.image_ids) && a.image_ids.length)
+    return getImageUrl(a.image_ids[0]);
+  if (a?.heroImage) return a.heroImage; // legacy URL
+  return PLACEHOLDER;
+}
 
 export default function ArticleList({
   query,
@@ -85,38 +111,48 @@ export default function ArticleList({
 
         {/* List */}
         <div className="mt-3 space-y-2">
-          {pageItems.map((a) => (
-            <article
-              key={a.id}
-              className={`flex cursor-pointer items-start gap-3 rounded-3xl border p-5 shadow-sm ${
-                currentId === a.id
-                  ? "border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950/30"
-                  : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60"
-              }`}
-              onClick={() => setCurrentId(a.id)}
-            >
-              <img
-                src={a.heroImage}
-                alt="hero"
-                className="h-14 w-20 rounded-lg object-cover"
-              />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="truncate text-sm font-semibold">{a.title}</h3>
-                  <Badge>{a.status}</Badge>
+          {pageItems.map((a) => {
+            const src = heroSrcFor(a);
+            const safeTags = Array.isArray(a?.tags) ? a.tags : [];
+            return (
+              <article
+                key={a.id}
+                className={`flex cursor-pointer items-start gap-3 rounded-3xl border p-5 shadow-sm ${
+                  currentId === a.id
+                    ? "border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950/30"
+                    : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60"
+                }`}
+                onClick={() => setCurrentId(a.id)}
+              >
+                <img
+                  src={src}
+                  alt="hero"
+                  className="h-14 w-20 rounded-lg object-cover"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="truncate text-sm font-semibold">
+                      {a.title}
+                    </h3>
+                    <Badge>{a.status}</Badge>
+                  </div>
+                  <p className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+                    {a.summary}
+                  </p>
+                  {safeTags.length > 0 && (
+                    <div className="mt-1 flex flex-wrap items-center gap-1">
+                      {safeTags.slice(0, 3).map((t) => (
+                        <Badge key={String(t)}>#{t}</Badge>
+                      ))}
+                      {safeTags.length > 3 && (
+                        <Badge>+{safeTags.length - 3}</Badge>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <p className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
-                  {a.summary}
-                </p>
-                <div className="mt-1 flex flex-wrap items-center gap-1">
-                  {a.tags.slice(0, 3).map((t) => (
-                    <Badge key={t}>#{t}</Badge>
-                  ))}
-                  {a.tags.length > 3 && <Badge>+{a.tags.length - 3}</Badge>}
-                </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
 
         {/* Pagination */}

@@ -14,6 +14,7 @@ import Button from "../atoms/Button";
 import Input from "../atoms/Input";
 import Textarea from "../atoms/TextArea";
 import TagEditor from "./TagEditor";
+import ImageUploader from "./ImageUploader";
 
 export default function EditorPanel({
   article,
@@ -45,6 +46,8 @@ export default function EditorPanel({
         heroImage: local.heroImage,
         status: local.status,
         tags: local.tags,
+        image_ids: local.image_ids || [],
+        hero_image_id: local.hero_image_id || null,
       });
     }, 300);
     return () => clearTimeout(t);
@@ -104,6 +107,15 @@ export default function EditorPanel({
     set({ status: next });
     onToggleStatus?.(article.id, next);
   };
+
+  const onImagesChange = (nextIds, nextHeroId) => {
+    set({ image_ids: nextIds, hero_image_id: nextHeroId });
+  };
+
+  const API = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const heroPreview = local.hero_image_id
+    ? `${API}/v1/images/${local.hero_image_id}`
+    : "";
 
   return (
     <div className="space-y-3">
@@ -168,14 +180,27 @@ export default function EditorPanel({
         </label>
 
         <label className="col-span-2 space-y-1">
-          <span className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
-            <ImageIcon size={14} /> Hero Image URL
-          </span>
-          <Input
-            value={local.heroImage || ""}
-            onChange={(e) => set({ heroImage: e.target.value })}
-            placeholder="https://…"
-          />
+          <div className="col-span-2 space-y-1">
+            <span className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
+              <ImageIcon size={14} /> Images (upload & attach)
+            </span>
+            <ImageUploader
+              articleId={article.id}
+              valueIds={local.image_ids || []}
+              heroId={local.hero_image_id || null}
+              onChange={onImagesChange}
+            />
+            {heroPreview && (
+              <div className="mt-2">
+                <span className="text-xs opacity-70">Hero preview:</span>
+                <img
+                  src={heroPreview}
+                  alt="hero"
+                  className="mt-1 h-36 w-full rounded-lg object-cover"
+                />
+              </div>
+            )}
+          </div>
         </label>
 
         <label className="col-span-2 space-y-1">
