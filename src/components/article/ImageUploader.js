@@ -31,7 +31,7 @@ export default function ImageUploader({
     try {
       // Backend should enforce "single image per article" by deleting previous image(s)
       const created = await uploadImage({ file, article_id: articleId }).unwrap();
-      const newId = created?.id;
+      const newId = created?.data?.id;
       if (!newId) throw new Error("Upload succeeded but no id returned.");
 
       // Overwrite semantics: keep only the latest image
