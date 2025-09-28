@@ -6,6 +6,6 @@ export const baseApi = createApi({
   baseQuery: axiosBaseQuery({
     prepareHeaders: (headers, { getState }) => headers // you can customize further
   }),
-  tagTypes: ["Auth", "Articles", "Article", "Tags", "Images"],
+  tagTypes: ["Auth", "Articles", "Article", "Tags", "Images", "PublicFiles"],
   endpoints: () => ({}),
 });

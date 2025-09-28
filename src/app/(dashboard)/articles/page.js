@@ -70,7 +70,6 @@ export default function ArticleCMS() {
     }
   );
   const loading = isFetching && (!items || items.length === 0);
-  const initialLoading = isFetching && (!items || items.length === 0);
   const backgroundRefreshing = isFetching && items && items.length > 0;
 
   useEffect(() => {
