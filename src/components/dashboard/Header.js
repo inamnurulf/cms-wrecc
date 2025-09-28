@@ -51,7 +51,7 @@ export default function Header({
         </div>
 
         <div className="flex items-center gap-2">
-          <button
+          {/* <button
             className="grid h-9 w-9 place-items-center rounded-xl hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 dark:hover:bg-slate-800"
             onClick={onToggleDark}
             aria-label="Toggle theme"
@@ -64,7 +64,7 @@ export default function Header({
           >
             <Bell className="h-5 w-5" />
             <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-emerald-500" />
-          </button>
+          </button> */}
           <div className="flex items-center gap-2 rounded-2xl border border-slate-200/60 bg-white/70 px-2 py-1 dark:border-slate-700 dark:bg-slate-900/60">
             <div className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-700 text-white">
               <User className="h-4 w-4" />
