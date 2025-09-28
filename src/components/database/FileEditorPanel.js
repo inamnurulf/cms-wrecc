@@ -14,6 +14,18 @@ import Button from "../atoms/Button";
 import Input from "../atoms/Input";
 import Textarea from "../atoms/TextArea";
 
+const isValidDriveLink = (url) => {
+  try {
+    const u = new URL(url);
+    // Accept only Google Drive domain
+    if (!u.hostname.includes("drive.google.com")) return false;
+    // Must contain `/d/FILE_ID/` or `id=FILE_ID`
+    return /\/d\/[a-zA-Z0-9_-]+/.test(u.pathname) || u.searchParams.has("id");
+  } catch {
+    return false; // Invalid URL
+  }
+};
+
 export default function FileEditorPanel({
   file,
   onChange,
@@ -21,7 +33,9 @@ export default function FileEditorPanel({
   onTogglePublish,
 }) {
   const [local, setLocal] = useState(file ?? null);
-  const [metaText, setMetaText] = useState(JSON.stringify(file?.metadata ?? {}, null, 2));
+  const [metaText, setMetaText] = useState(
+    JSON.stringify(file?.metadata ?? {}, null, 2)
+  );
   const [metaValid, setMetaValid] = useState(true);
 
   // used to prevent immediate debounce fire on mount/switch
@@ -92,7 +106,11 @@ export default function FileEditorPanel({
           File Editor
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={togglePublished} title="Toggle publish">
+          <Button
+            variant="outline"
+            onClick={togglePublished}
+            title="Toggle publish"
+          >
             {local.is_published ? <Check size={16} /> : <X size={16} />}
             {local.is_published ? "Unpublish" : "Publish"}
           </Button>
@@ -147,18 +165,28 @@ export default function FileEditorPanel({
               placeholder="https://drive.google.com/..."
               value={local.drive_link || ""}
               onChange={(e) => set({ drive_link: e.target.value })}
+              className={
+                local.drive_link && !isValidDriveLink(local.drive_link)
+                  ? "border-rose-300 bg-rose-50/40 focus:ring-rose-400 dark:border-rose-800 dark:bg-rose-900/30"
+                  : ""
+              }
             />
             <a
-              href={local.drive_link || "#"}
+              href={isValidDriveLink(local.drive_link) ? local.drive_link : "#"}
               target="_blank"
               rel="noreferrer"
-              onClick={(e) => !local.drive_link && e.preventDefault()}
+              onClick={(e) =>
+                !isValidDriveLink(local.drive_link) && e.preventDefault()
+              }
               className="inline-flex items-center rounded-xl border border-slate-200 px-3 text-sm hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
               title="Open link"
             >
               <LinkIcon size={16} />
             </a>
           </div>
+          {local.drive_link && !isValidDriveLink(local.drive_link) && (
+            <p className="text-xs text-rose-600">Invalid Google Drive link</p>
+          )}
         </label>
 
         {/* Description */}
