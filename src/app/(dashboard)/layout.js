@@ -27,7 +27,7 @@ const DashboardLayout = ({ children }) => {
   const nav = [
     { label: "Home", icon: Home, href: "/home" },
     { label: "Articles", icon: FileText, href: "/articles" },
-    // { label: "Data", icon: Database, href: "/data" },
+    { label: "Data", icon: Database, href: "/data" },
   ];
 
   const handleLogout = () => {
