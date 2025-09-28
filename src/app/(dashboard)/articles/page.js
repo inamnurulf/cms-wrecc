@@ -18,6 +18,10 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setFilters, setCurrentId } from "@/store/slices/articles.slice";
 import { useSearchParams } from "next/navigation";
+import ArticleListSkeleton from "@/components/article/ArticleListSkeleton";
+import RecentArticlesSkeleton from "@/components/article/RecentArticlesSkeleton";
+import ArticlePreviewSkeleton from "@/components/article/ArticlePreviewSkeleton";
+import BusyOverlay from "@/components/article/BusyOverlay";
 
 // ---------- Helpers ----------
 const toSlug = (s) =>
@@ -65,6 +69,9 @@ export default function ArticleCMS() {
       }),
     }
   );
+  const loading = isFetching && (!items || items.length === 0);
+  const initialLoading = isFetching && (!items || items.length === 0);
+  const backgroundRefreshing = isFetching && items && items.length > 0;
 
   useEffect(() => {
     if (!requestedEdit || !items?.length) return;
@@ -191,27 +198,49 @@ export default function ArticleCMS() {
         {/* Stats */}
         <StatsGrid />
         {/* Recent Articles */}
-        <RecentArticles recent={recent} setCurrentId={setCurrentIdLocal} />{" "}
+        <section className="relative">
+          {loading ? (
+            <RecentArticlesSkeleton />
+          ) : (
+            <>
+              <BusyOverlay show={backgroundRefreshing} />
+              <RecentArticles
+                recent={recent}
+                setCurrentId={setCurrentIdLocal}
+              />
+            </>
+          )}
+        </section>
+
         {/* 👈 pass dispatcher */}
         {/* Main Grid */}
         <main id="articles" className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {/* Left: List & Filters */}
-          <ArticleList
-            query={filters.q ?? ""}
-            setQuery={setQuery}
-            statusFilter={filters.status || "all"}
-            setStatusFilter={setStatus}
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            page={page}
-            setPage={setPage}
-            totalPages={totalPages}
-            pageItems={pageItems}
-            currentId={currentId}
-            setCurrentId={setCurrentIdLocal}
-            loading={isFetching}
-            setPageSize={setPageSize}
-          />
+          <section className="relative md:col-span-1">
+            {loading ? (
+              <ArticleListSkeleton count={6} />
+            ) : (
+              <>
+                <BusyOverlay show={backgroundRefreshing} />
+                <ArticleList
+                  query={filters.q ?? ""}
+                  setQuery={setQuery}
+                  statusFilter={filters.status || "all"}
+                  setStatusFilter={setStatus}
+                  sortBy={sortBy}
+                  setSortBy={setSortBy}
+                  page={page}
+                  setPage={setPage}
+                  totalPages={totalPages}
+                  pageItems={pageItems}
+                  currentId={currentId}
+                  setCurrentId={setCurrentIdLocal}
+                  loading={isFetching}
+                  setPageSize={setPageSize}
+                />
+              </>
+            )}
+          </section>
 
           {/* Middle: Editor */}
           <section className="md:col-span-1">
@@ -237,8 +266,13 @@ export default function ArticleCMS() {
               <div className="border-b border-slate-200 p-3 text-sm font-semibold dark:border-slate-800">
                 <Eye className="mr-2 inline" size={16} /> Live Preview
               </div>
-              {current ? (
-                <ArticlePreview article={current} />
+              {loading ? (
+                <ArticlePreviewSkeleton showImage paragraphs={3} />
+              ) : current ? (
+                <>
+                  <BusyOverlay show={backgroundRefreshing} />
+                  <ArticlePreview article={current} />
+                </>
               ) : (
                 <div className="p-6 text-slate-500">Nothing to preview.</div>
               )}
