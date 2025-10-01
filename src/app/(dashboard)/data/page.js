@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Eye, Plus, Sun, Moon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
@@ -24,10 +24,6 @@ import FilePreview from "@/components/database/FilePreview";
 import FilesListSkeleton from "@/components/database/FileListSkeleton";
 import FilePreviewSkeleton from "@/components/database/FilePreviewSkeleton";
 import BusyOverlay from "@/components/database/BusyOverlay";
-
-
-
-
 
 // ---------- Helpers ----------
 const toSlug = (s) =>
@@ -93,7 +89,7 @@ export default function PublicFilesCMS() {
   const loading = isFetching && (!items || items.length === 0);
   const backgroundRefreshing = isFetching && items && items.length > 0;
 
-  // Deep-link: ?edit=<id> -> select and scroll to editor
+  // Deep-link: ?edit=<id>
   useEffect(() => {
     if (!requestedEdit || !items?.length) return;
     const match = items.find((a) => String(a.id) === String(requestedEdit));
@@ -124,11 +120,12 @@ export default function PublicFilesCMS() {
   const onCreate = async () => {
     const base = "Untitled File";
     const slug = toSlug(`${base}-${Date.now().toString(36).slice(-4)}`);
+    // Use new schema: links (can start empty) instead of drive_link
     const row = await createFile({
       title: base,
       slug,
       description: "",
-      drive_link: "https://drive.google.com/",
+      links: [],                // <- new
       is_published: false,
       metadata: {},
     }).unwrap();
@@ -137,11 +134,12 @@ export default function PublicFilesCMS() {
   };
 
   const onChange = async (id, patch) => {
+    // Accept links from editor; do not send drive_link anymore
     const body = {
       title: patch.title,
       slug: patch.slug,
       description: patch.description,
-      drive_link: patch.drive_link,
+      links: patch.links ?? [],  // <- new
       metadata: patch.metadata,
     };
     await updateFile({ id, body }).unwrap();
@@ -164,7 +162,7 @@ export default function PublicFilesCMS() {
           <div>
             <h1 className="text-xl font-semibold">Public Files CMS</h1>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Manage Drive-linked documents shown on the site.
+              Manage files with multiple links, metadata, and publishing state.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -209,7 +207,7 @@ export default function PublicFilesCMS() {
                   setCurrentId={setCurrentId}
                   onCreate={onCreate}
                   refreshing={backgroundRefreshing}
-                  setPageSize={setPageSize} // optional: if your list supports changing page size
+                  setPageSize={setPageSize}
                 />
               </>
             )}
@@ -238,7 +236,8 @@ export default function PublicFilesCMS() {
           <section className="md:col-span-1">
             <div className="sticky top-[68px] rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
               <div className="border-b border-slate-200 p-3 text-sm font-semibold dark:border-slate-800">
-                <Eye className="mr-2 inline" size={16} />Preview
+                <Eye className="mr-2 inline" size={16} />
+                Preview
               </div>
               {loading ? (
                 <FilePreviewSkeleton paragraphs={3} />

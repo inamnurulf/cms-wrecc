@@ -8,13 +8,16 @@ import {
   Link as LinkIcon,
   Check,
   X,
+  Plus,
+  ExternalLink
 } from "lucide-react";
 
 import Button from "../atoms/Button";
 import Input from "../atoms/Input";
 import Textarea from "../atoms/TextArea";
 
-const isValidDriveLink = (url) => {
+// Generic URL validator (accepts any http/https, not only Drive)
+const isValidUrl = (url) => {
   try {
     const u = new URL(url);
     // Accept only Google Drive domain
@@ -22,9 +25,10 @@ const isValidDriveLink = (url) => {
     // Must contain `/d/FILE_ID/` or `id=FILE_ID`
     return /\/d\/[a-zA-Z0-9_-]+/.test(u.pathname) || u.searchParams.has("id");
   } catch {
-    return false; // Invalid URL
+    return false;
   }
 };
+
 
 export default function FileEditorPanel({
   file,
@@ -32,7 +36,16 @@ export default function FileEditorPanel({
   onDelete,
   onTogglePublish,
 }) {
+  const normalizeInitialLinks = (f)=> {
+    if (Array.isArray(f?.links)) return f.links;
+    if (f?.drive_link) {
+      return [{ name: "Primary link", href: String(f.drive_link), description: null, meta: {} }];
+    }
+    return [];
+    };
+  
   const [local, setLocal] = useState(file ?? null);
+  const [links, setLinks] = useState(normalizeInitialLinks(file));
   const [metaText, setMetaText] = useState(
     JSON.stringify(file?.metadata ?? {}, null, 2)
   );
@@ -44,13 +57,15 @@ export default function FileEditorPanel({
   // sync when switching selected file
   useEffect(() => {
     setLocal(file ?? null);
+    setLinks(normalizeInitialLinks(file));
     setMetaText(JSON.stringify(file?.metadata ?? {}, null, 2));
     setMetaValid(true);
     didMount.current = false;
   }, [file?.id]); // only when id changes
 
   // helper setters
-  const set = (patch) => setLocal((s) => (s ? { ...s, ...patch } : s));
+  const set = (patch) =>
+    setLocal((s) => (s ? { ...s, ...patch } : s));
 
   const toSlug = (s) =>
     String(s || "")
@@ -67,19 +82,36 @@ export default function FileEditorPanel({
       didMount.current = true;
       return;
     }
+
     const t = setTimeout(() => {
       if (!metaValid) return; // don't save while JSON invalid
+
+      // sanitize links: drop completely empty rows (no name & no href)
+      const cleaned = (links || [])
+        .filter((l) => (l?.name?.trim() || l?.href?.trim()))
+        .map((l) => ({
+          name: String(l.name || "").trim(),
+          href: String(l.href || "").trim(),
+          description:
+            l.description == null || String(l.description).trim() === ""
+              ? null
+              : String(l.description),
+          // keep meta as-is if present
+          ...(l.meta ? { meta: l.meta } : {}),
+        }));
+
       onChange?.(file.id, {
         title: local.title ?? "",
         slug: local.slug ?? "",
         description: local.description ?? "",
-        drive_link: local.drive_link ?? "",
+        links: cleaned,
         metadata: local.metadata ?? {},
       });
     }, 300);
+
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [local, metaValid]);
+  }, [local, links, metaValid]);
 
   // Handlers
   const togglePublished = () => {
@@ -87,6 +119,22 @@ export default function FileEditorPanel({
     const next = !local.is_published;
     set({ is_published: next });
     onTogglePublish?.(file.id, next);
+  };
+
+  const addLink = () => {
+    setLinks((arr) => [...arr, { name: "", href: "", description: "" }]);
+  };
+
+  const updateLink = (idx, patch) => {
+    setLinks((arr) => {
+      const next = [...arr];
+      next[idx] = { ...next[idx], ...patch };
+      return next;
+    });
+  };
+
+  const removeLink = (idx) => {
+    setLinks((arr) => arr.filter((_, i) => i !== idx));
   };
 
   if (!file || !local) {
@@ -140,7 +188,7 @@ export default function FileEditorPanel({
           <span className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
             / Slug
           </span>
-          <div className="flex gap-2">
+        <div className="flex gap-2">
             <Input
               value={local.slug || ""}
               onChange={(e) => set({ slug: toSlug(e.target.value) })}
@@ -155,39 +203,130 @@ export default function FileEditorPanel({
           </div>
         </label>
 
-        {/* Drive Link */}
-        <label className="col-span-2 space-y-1">
-          <span className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
-            <LinkIcon size={14} /> Drive Link
-          </span>
-          <div className="flex gap-2">
-            <Input
-              placeholder="https://drive.google.com/..."
-              value={local.drive_link || ""}
-              onChange={(e) => set({ drive_link: e.target.value })}
-              className={
-                local.drive_link && !isValidDriveLink(local.drive_link)
-                  ? "border-rose-300 bg-rose-50/40 focus:ring-rose-400 dark:border-rose-800 dark:bg-rose-900/30"
-                  : ""
-              }
-            />
-            <a
-              href={isValidDriveLink(local.drive_link) ? local.drive_link : "#"}
-              target="_blank"
-              rel="noreferrer"
-              onClick={(e) =>
-                !isValidDriveLink(local.drive_link) && e.preventDefault()
-              }
-              className="inline-flex items-center rounded-xl border border-slate-200 px-3 text-sm hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
-              title="Open link"
-            >
-              <LinkIcon size={16} />
-            </a>
+        {/* Links (replaces Drive Link) */}
+        <div className="col-span-2 space-y-2 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-200">
+              <LinkIcon size={14} /> Links
+            </span>
+            <Button variant="outline" onClick={addLink} title="Add new link">
+              <Plus size={16} /> Add link
+            </Button>
           </div>
-          {local.drive_link && !isValidDriveLink(local.drive_link) && (
-            <p className="text-xs text-rose-600">Invalid Google Drive link</p>
+
+          {links.length === 0 && (
+            <p className="text-xs text-slate-500">
+              No links yet. Click “Add link” to create one.
+            </p>
           )}
-        </label>
+
+          <div className="space-y-3">
+            {links.map((l, idx) => {
+              const badName = !String(l.name || "").trim();
+              const badHref = !isValidUrl(l.href || "");
+              return (
+                <div
+                  key={idx}
+                  className="rounded-xl border border-slate-200 p-3 dark:border-slate-700"
+                >
+                  <div className="grid grid-cols-12 gap-2">
+                    {/* Name */}
+                    <label className="col-span-3 space-y-1">
+                      <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
+                        Name
+                      </span>
+                      <Input
+                        value={l.name || ""}
+                        onChange={(e) => updateLink(idx, { name: e.target.value })}
+                        className={badName ? "border-rose-300 bg-rose-50/40 dark:border-rose-800 dark:bg-rose-900/30" : ""}
+                      />
+                    </label>
+
+                    {/* Href */}
+                    <label className="col-span-7 space-y-1">
+                      <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
+                        URL
+                      </span>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="https://…"
+                          value={l.href || ""}
+                          onChange={(e) => updateLink(idx, { href: e.target.value })}
+                          className={
+                            badHref
+                              ? "border-rose-300 bg-rose-50/40 focus:ring-rose-400 dark:border-rose-800 dark:bg-rose-900/30"
+                              : ""
+                          }
+                        />
+                        <a
+                          href={badHref ? "#" : l.href}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(e) => badHref && e.preventDefault()}
+                          className="inline-flex items-center rounded-xl border border-slate-200 px-3 text-sm hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+                          title="Open link"
+                        >
+                          <ExternalLink size={16} />
+                        </a>
+                      </div>
+                      {badHref && (
+                        <p className="text-xs text-rose-600">
+                          Must start with http:// or https://
+                        </p>
+                      )}
+                    </label>
+
+                    {/* Delete */}
+                    <div className="col-span-2 flex items-end justify-end">
+                      <Button
+                        variant="outline"
+                        onClick={() => removeLink(idx)}
+                        title="Remove link"
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
+
+                    {/* Description (full width under) */}
+                    <label className="col-span-12 space-y-1">
+                      <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
+                        Description (optional)
+                      </span>
+                      <Input
+                        value={l.description || ""}
+                        onChange={(e) =>
+                          updateLink(idx, { description: e.target.value })
+                        }
+                      />
+                    </label>
+                  </div>
+
+                  {/* Per-link meta (optional): uncomment to expose JSON meta per link */}
+                  {/*
+                  <div className="mt-2">
+                    <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
+                      Meta (JSON, optional)
+                    </span>
+                    <Textarea
+                      rows={5}
+                      className="font-mono"
+                      value={JSON.stringify(l.meta ?? {}, null, 2)}
+                      onChange={(e) => {
+                        try {
+                          const parsed = JSON.parse(e.target.value || "{}");
+                          updateLink(idx, { meta: parsed });
+                        } catch {
+                          // keep previous meta if invalid; you can add error UI if desired
+                        }
+                      }}
+                    />
+                  </div>
+                  */}
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Description */}
         <label className="col-span-2 space-y-1">
@@ -233,11 +372,24 @@ export default function FileEditorPanel({
           <Button
             onClick={() => {
               if (!file?.id || !local || !metaValid) return;
+
+              const cleaned = (links || [])
+                .filter((l) => (l?.name?.trim() || l?.href?.trim()))
+                .map((l) => ({
+                  name: String(l.name || "").trim(),
+                  href: String(l.href || "").trim(),
+                  description:
+                    l.description == null || String(l.description).trim() === ""
+                      ? null
+                      : String(l.description),
+                  ...(l.meta ? { meta: l.meta } : {}),
+                }));
+
               onChange(file.id, {
                 title: local.title ?? "",
                 slug: local.slug ?? "",
                 description: local.description ?? "",
-                drive_link: local.drive_link ?? "",
+                links: cleaned,
                 metadata: local.metadata ?? {},
               });
             }}
