@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   FileEdit,
   Trash2,
@@ -8,6 +8,8 @@ import {
   Image as ImageIcon,
   Tags,
   Save,
+  Link as LinkIcon,
+  FileText,
 } from "lucide-react";
 
 import Button from "../atoms/Button";
@@ -22,11 +24,18 @@ export default function EditorPanel({
   onDelete,
   onToggleStatus,
 }) {
-  const [local, setLocal] = useState(article);
+  const [local, setLocal] = useState({
+    ...article,
+    source: article?.source ?? (article?.external_link ? "drive" : "inline"),
+  });
+
   const didMount = useRef(false);
 
   useEffect(() => {
-    setLocal(article);
+    setLocal({
+      ...article,
+      source: article?.source ?? (article?.external_link ? "drive" : "inline"),
+    });
     didMount.current = false; // prevent immediate debounce fire
   }, [article.id]);
 
@@ -42,12 +51,14 @@ export default function EditorPanel({
         slug: local.slug,
         author: local.author,
         summary: local.summary,
-        content: local.content,
-        heroImage: local.heroImage,
+        content: local.source === "inline" ? local.content : null, // inline only
         status: local.status,
         tags: local.tags,
         image_ids: local.image_ids || [],
         hero_image_id: local.hero_image_id || null,
+        source: local.source,
+        external_link:
+          local.source === "drive" ? local.external_link || null : null,
       });
     }, 300);
     return () => clearTimeout(t);
@@ -117,6 +128,19 @@ export default function EditorPanel({
     ? `${API}/v1/images/${local.hero_image_id}`
     : "";
 
+  const drivePreview = (url) => {
+    if (!url) return "";
+    // If it already has /preview, keep it; else swap /view → /preview
+    if (/\/preview($|\?)/.test(url)) return url;
+    return url.replace(/\/view(\?.*)?$/, "/preview");
+  };
+
+  const onToggleSource = (next) => {
+    // When switching to drive, we keep content in state but won't send it (controller ignores).
+    // When switching to inline, leave external_link (not sent) so user doesn't lose it visually if they bounce back.
+    set({ source: next });
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -179,6 +203,7 @@ export default function EditorPanel({
           />
         </label>
 
+        {/* Images */}
         <label className="col-span-2 space-y-1">
           <div className="col-span-2 space-y-1">
             <span className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
@@ -203,6 +228,7 @@ export default function EditorPanel({
           </div>
         </label>
 
+        {/* Summary */}
         <label className="col-span-2 space-y-1">
           <span className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
             Summary
@@ -214,6 +240,7 @@ export default function EditorPanel({
           />
         </label>
 
+        {/* Tags */}
         <div className="col-span-2">
           <div className="mb-1 flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
             <Tags size={14} /> Tags (names only)
@@ -225,17 +252,88 @@ export default function EditorPanel({
           />
         </div>
 
-        <label className="col-span-2 space-y-1">
-          <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-            Body (Markdown)
-          </span>
-          <Textarea
-            rows={16}
-            value={local.content || ""}
-            onChange={(e) => set({ content: e.target.value })}
-            className="font-mono"
-          />
-        </label>
+        {/* Source Toggle */}
+        <div className="col-span-2">
+          <div className="mb-1 flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
+            Source
+          </div>
+          <div className="inline-flex overflow-hidden rounded-lg border border-slate-300 dark:border-slate-600">
+            <button
+              type="button"
+              onClick={() => onToggleSource("inline")}
+              className={`px-3 py-1.5 text-sm flex items-center gap-1 ${
+                local.source === "inline"
+                  ? "bg-slate-900 text-white dark:bg-slate-200 dark:text-slate-900"
+                  : "bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              }`}
+            >
+              <FileText size={14} /> Content
+            </button>
+            <button
+              type="button"
+              onClick={() => onToggleSource("drive")}
+              className={`px-3 py-1.5 text-sm flex items-center gap-1 border-l border-slate-300 dark:border-slate-600 ${
+                local.source === "drive"
+                  ? "bg-slate-900 text-white dark:bg-slate-200 dark:text-slate-900"
+                  : "bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              }`}
+            >
+              <LinkIcon size={14} /> Link
+            </button>
+          </div>
+          <p className="mt-1 text-xs text-slate-500">
+            {local.source === "inline"
+              ? "Write article body below."
+              : "Paste a Google Drive share link (we’ll render the preview)."}
+          </p>
+        </div>
+
+        {/* External link (Drive) */}
+        {local.source === "drive" && (
+          <>
+            <label className="col-span-2 space-y-1">
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                External Link (Google Drive share link)
+              </span>
+              <Input
+                value={local.external_link || ""}
+                onChange={(e) => set({ external_link: e.target.value })}
+                placeholder="https://drive.google.com/file/d/<FILE_ID>/view?usp=sharing"
+              />
+            </label>
+
+            {local.external_link && (
+              <div className="col-span-2">
+                <div className="mb-1 text-xs font-medium text-slate-600 dark:text-slate-300">
+                  Live Preview
+                </div>
+                <div className="relative w-full h-[55vh] rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
+                  <iframe
+                    src={drivePreview(local.external_link)}
+                    className="absolute inset-0 w-full h-full"
+                    allow="autoplay"
+                  />
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Body (Markdown) */}
+        {local.source === "inline" && (
+          <label className="col-span-2 space-y-1">
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+              Body (Markdown)
+            </span>
+            <Textarea
+              rows={16}
+              value={local.content || ""}
+              onChange={(e) => set({ content: e.target.value })}
+              className="font-mono"
+              placeholder=""
+            />
+          </label>
+        )}
       </div>
     </div>
   );

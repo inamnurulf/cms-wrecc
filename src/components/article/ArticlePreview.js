@@ -5,7 +5,7 @@ import Badge from "../atoms/Badge";
 import { getImageUrl } from "@/services/images.api";
 
 export default function ArticlePreview({ article = {} }) {
-  // Normalize fields coming from API vs legacy
+  // Normalize fields from API (new + legacy)
   const {
     title = "",
     summary = "",
@@ -16,26 +16,39 @@ export default function ArticlePreview({ article = {} }) {
     publishedAt, // legacy
     hero_image_id,
     image_ids = [],
-    heroImage, // legacy URL fallback
+    heroImage, // legacy URL
+    // NEW:
+    source = article?.external_link ? "drive" : "inline",
+    external_link = null,
   } = article;
 
   const displayDateISO = published_at || publishedAt || null;
 
-  // Pick hero: prefer explicit hero_image_id, then first/only image_ids, else legacy heroImage URL
+  // hero selection unchanged
   const heroSrc = useMemo(() => {
     if (hero_image_id) return getImageUrl(hero_image_id);
     const firstId =
       Array.isArray(image_ids) && image_ids.length ? image_ids[0] : null;
     if (firstId) return getImageUrl(firstId);
-    if (heroImage) return heroImage; // legacy absolute URL
+    if (heroImage) return heroImage;
     return null;
   }, [hero_image_id, image_ids, heroImage]);
 
   const safeTags = Array.isArray(tags) ? tags : [];
 
+  // Convert Drive share link to preview
+  const drivePreview = (url) => {
+    if (!url) return "";
+    if (/\/preview($|\?)/.test(url)) return url;
+    return url.replace(/\/view(\?.*)?$/, "/preview");
+  };
+
+  const isDrive = String(source || "").toLowerCase() === "drive";
+  const previewURL = isDrive ? drivePreview(external_link) : null;
+
   return (
     <div>
-      {/* Hero */}
+      {/* Hero + meta */}
       <div className="relative overflow-hidden border-b border-slate-200/60 bg-gradient-to-br from-emerald-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
         <div className="p-4 sm:p-6">
           <div className="rounded-2xl bg-white/80 p-4 backdrop-blur dark:bg-slate-900/60">
@@ -86,110 +99,109 @@ export default function ArticlePreview({ article = {} }) {
         </div>
       </div>
 
-      {/* Body */}
+      {/* Body / Drive Preview */}
       <div className="prose prose-slate max-w-none p-4 sm:p-6 dark:prose-invert">
-        <ReactMarkdown
-                components={{
-                  h1: ({ node, ...props }) => (
-                    <h1
-                      className="text-3xl font-extrabold tracking-tight mt-8 mb-4"
-                      {...props}
-                    />
-                  ),
-                  h2: ({ node, ...props }) => (
-                    <h2
-                      className="text-2xl font-semibold mt-6 mb-3"
-                      {...props}
-                    />
-                  ),
-                  h3: ({ node, ...props }) => (
-                    <h3
-                      className="text-xl font-semibold mt-5 mb-2"
-                      {...props}
-                    />
-                  ),
-                  p: ({ node, ...props }) => (
-                    <p className=" leading-8 mb-4" {...props} />
-                  ),
-                  ul: ({ node, ...props }) => (
-                    <ul
-                      className="list-disc list-inside space-y-1  mb-4 pl-4"
-                      {...props}
-                    />
-                  ),
-                  ol: ({ node, ...props }) => (
-                    <ol
-                      className="list-decimal list-inside space-y-1  mb-4 pl-4"
-                      {...props}
-                    />
-                  ),
-                  li: ({ node, ...props }) => (
-                    <li className="ml-2" {...props} />
-                  ),
-                  blockquote: ({ node, ...props }) => (
-                    <blockquote
-                      className="border-l-4 border-emerald-400 pl-4 italic my-4"
-                      {...props}
-                    />
-                  ),
-                  code: ({ node, inline, ...props }) =>
-                    inline ? (
-                      <code
-                        className="rounded px-1.5 py-0.5 text-sm font-mono text-emerald-700"
-                        {...props}
-                      />
-                    ) : (
-                      <span className="rounded-xl p-4 overflow-x-auto my-4">
-                        <code className="font-mono text-sm" {...props} />
-                      </span>
-                    ),
-                  a: ({ node, ...props }) => (
-                    <a
-                      className="hover:underline font-medium"
-                      {...props}
-                    />
-                  ),
-                  img: ({ node, ...props }) => (
-                    <img
-                      className="rounded-xl shadow my-6 max-w-full"
-                      {...props}
-                    />
-                  ),
-                  table: ({ node, ...props }) => (
-                    <table
-                      className="w-full border-collapse border border-gray-200 text-sm my-6"
-                      {...props}
-                    />
-                  ),
-                  thead: ({ node, ...props }) => (
-                    <thead
-                      className="bg-gray-100  font-semibold"
-                      {...props}
-                    />
-                  ),
-                  tbody: ({ node, ...props }) => (
-                    <tbody className="divide-y divide-gray-200" {...props} />
-                  ),
-                  tr: ({ node, ...props }) => (
-                    <tr className="border-b last:border-0" {...props} />
-                  ),
-                  th: ({ node, ...props }) => (
-                    <th
-                      className="border border-gray-200 px-3 py-2 text-left"
-                      {...props}
-                    />
-                  ),
-                  td: ({ node, ...props }) => (
-                    <td
-                      className="border border-gray-200 px-3 py-2"
-                      {...props}
-                    />
-                  ),
-                  hr: ({ node, ...props }) => (
-                    <hr className="my-8 border-gray-200" {...props} />
-                  ),
-                }}
-              >{content || ""}</ReactMarkdown>
+        {isDrive ? (
+          previewURL ? (
+            <div className="relative w-full h-[78vh] rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow">
+              <iframe
+                src={previewURL}
+                className="absolute inset-0 h-full w-full"
+                allow="autoplay"
+                title="Drive Preview"
+              />
+            </div>
+          ) : (
+            <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
+              External link is missing. Please provide a valid Google Drive link.
+            </div>
+          )
+        ) : (
+          <ReactMarkdown
+            components={{
+              h1: ({ node, ...props }) => (
+                <h1
+                  className="text-3xl font-extrabold tracking-tight mt-8 mb-4"
+                  {...props}
+                />
+              ),
+              h2: ({ node, ...props }) => (
+                <h2 className="text-2xl font-semibold mt-6 mb-3" {...props} />
+              ),
+              h3: ({ node, ...props }) => (
+                <h3 className="text-xl font-semibold mt-5 mb-2" {...props} />
+              ),
+              p: ({ node, ...props }) => (
+                <p className="leading-8 mb-4" {...props} />
+              ),
+              ul: ({ node, ...props }) => (
+                <ul
+                  className="list-disc list-inside space-y-1 mb-4 pl-4"
+                  {...props}
+                />
+              ),
+              ol: ({ node, ...props }) => (
+                <ol
+                  className="list-decimal list-inside space-y-1 mb-4 pl-4"
+                  {...props}
+                />
+              ),
+              li: ({ node, ...props }) => <li className="ml-2" {...props} />,
+              blockquote: ({ node, ...props }) => (
+                <blockquote
+                  className="border-l-4 border-emerald-400 pl-4 italic my-4"
+                  {...props}
+                />
+              ),
+              code: ({ node, inline, ...props }) =>
+                inline ? (
+                  <code
+                    className="rounded px-1.5 py-0.5 text-sm font-mono text-emerald-700"
+                    {...props}
+                  />
+                ) : (
+                  <span className="rounded-xl p-4 overflow-x-auto my-4">
+                    <code className="font-mono text-sm" {...props} />
+                  </span>
+                ),
+              a: ({ node, ...props }) => (
+                <a className="hover:underline font-medium" {...props} />
+              ),
+              img: ({ node, ...props }) => (
+                <img className="rounded-xl shadow my-6 max-w-full" {...props} />
+              ),
+              table: ({ node, ...props }) => (
+                <table
+                  className="w-full border-collapse border border-gray-200 text-sm my-6"
+                  {...props}
+                />
+              ),
+              thead: ({ node, ...props }) => (
+                <thead className="bg-gray-100 font-semibold" {...props} />
+              ),
+              tbody: ({ node, ...props }) => (
+                <tbody className="divide-y divide-gray-200" {...props} />
+              ),
+              tr: ({ node, ...props }) => (
+                <tr className="border-b last:border-0" {...props} />
+              ),
+              th: ({ node, ...props }) => (
+                <th
+                  className="border border-gray-200 px-3 py-2 text-left"
+                  {...props}
+                />
+              ),
+              td: ({ node, ...props }) => (
+                <td className="border border-gray-200 px-3 py-2" {...props} />
+              ),
+              hr: ({ node, ...props }) => (
+                <hr className="my-8 border-gray-200" {...props} />
+              ),
+            }}
+          >
+            {content || ""}
+          </ReactMarkdown>
+        )}
       </div>
     </div>
   );
